@@ -1,0 +1,33 @@
+version: "3.7"
+services:
+  mlflow:
+    image: mlmodel-template
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - 5000:5000
+    volumes:
+      - ../data:/home/ai/data
+    command:
+      mlflow ui --host 0.0.0.0 --port 5000
+    container_name: mlflow
+    working_dir: /home/ai/data/mlflow
+
+  mlmodel:
+    image: mlmodel-template
+    depends_on:
+      - mlflow
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../src:/home/ai/src
+      - ../tests:/home/ai/tests
+      - ../data:/home/ai/data
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_TRACKING_FOLDER=/home/ai/data/mlflow
+      - DEFAULT_LOGGER_LEVEL=INFO
+    container_name: mlmodel
+    tty: true
