@@ -1,8 +1,8 @@
-import os
+import logging
 from typing import Dict, Any
 
 import mlflow
-# import optuna
+import optuna
 import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes
@@ -36,41 +36,45 @@ def train_model(model, data, hparams):
     model = model.fit(data["train"], data["train_labels"])
     with open("rf_model.pkl", "wb") as f:
         pickle.dump(model, f)
-    mlflow.log_artifacts(
-        os.environ.get("MLFLOW_TRACKING_FOLDER"), artifact_path="rf_model.pkl"
-    )
+    mlflow.log_artifact("rf_model.pkl")
     return model
 
 
-def predict(model, data):
-    y_preds = model.predict(data["test"])
-    compute_metrics(y_preds, data["test_labels"])
+def objective(trial, data):
+    with mlflow.start_run():
+        max_depth = trial.suggest_int('rf_max_depth', 2, 32, log=True)
+        logger.info("Set seed")
+        seed = set_seed()
 
-    return y_preds
+        hparams = {"n_estimators": 100, "max_depth": max_depth, "seed": seed}
+        mlflow.log_params(hparams)
+
+        logger.info("Load model")
+        model = load_model(hparams)
+
+        logger.info("Train model")
+        model = train_model(model, data, hparams)
+
+        logger.info("Predict")
+        y_preds = model.predict(data["test"])
+        metrics = compute_metrics(y_preds, data["test_labels"])
+        return metrics["rmse"]
 
 
 def main():
     logger.info("Load dataset")
     data = load_data()
 
-    logger.info("Set seed")
-    seed = set_seed()
+    func = lambda trial: objective(trial, data)
 
-    with mlflow.start_run():
-        hparams = {"n_estimators": 100, "max_depth": 6, "seed": seed}
-        mlflow.log_params(hparams)
-
-        logger.info("Load model")
-        model = load_model(hparams)
-
-        # logger.info("Start hyperparameter search")
-        # hparams = hyperparameter_search(model, data)
-
-        logger.info("Train model")
-        model = train_model(model, data, hparams)
-
-        logger.info("Predict")
-        predictions = predict(model, data)
+    n_trials = 100
+    logger.info("Hyperparameter search for %d trials", n_trials)
+    
+    original_level = logger.getEffectiveLevel()
+    logger.setLevel(logging.WARNING)
+    study = optuna.create_study(direction='minimize')
+    study.optimize(func, n_trials=n_trials)
+    logger.setLevel(original_level)
 
 
 if __name__ == "__main__":

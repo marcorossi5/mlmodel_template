@@ -1,3 +1,5 @@
+from typing import Dict
+
 import mlflow
 import numpy as np
 from .logger import logger
@@ -30,6 +32,7 @@ METRICS_FN = {
 }
 
 
-def compute_metrics(y_pred, y_true):
+def compute_metrics(y_pred, y_true) -> Dict[str, float]:
     metrics = {k: fn(y_pred, y_true, verbose=True) for k, fn in METRICS_FN.items()}
     mlflow.log_metrics(metrics)
+    return metrics
