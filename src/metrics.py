@@ -1,6 +1,5 @@
 from typing import Dict
 
-import mlflow
 import numpy as np
 from .logger import logger
 
@@ -24,15 +23,3 @@ def rmse(y_pred, y_true, verbose=False):
     if verbose:
         logger.info("rmse: %.4f", metric)
     return metric
-
-
-METRICS_FN = {
-    "mae": mae,
-    "rmse": rmse,
-}
-
-
-def compute_metrics(y_pred, y_true) -> Dict[str, float]:
-    metrics = {k: fn(y_pred, y_true, verbose=True) for k, fn in METRICS_FN.items()}
-    mlflow.log_metrics(metrics)
-    return metrics
