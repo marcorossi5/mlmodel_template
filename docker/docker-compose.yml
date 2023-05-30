@@ -25,9 +25,5 @@ services:
       - ../src:/home/ai/src
       - ../tests:/home/ai/tests
       - ../data:/home/ai/data
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-      - MLFLOW_TRACKING_FOLDER=/home/ai/data/mlflow
-      - DEFAULT_LOGGER_LEVEL=INFO
     container_name: mlmodel
     tty: true

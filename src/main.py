@@ -1,6 +1,9 @@
 import logging
 import os
 
+from dotenv import load_dotenv
+load_dotenv("src/.env")
+
 import mlflow
 import optuna
 from optuna.integration.mlflow import MLflowCallback
