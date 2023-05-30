@@ -10,7 +10,7 @@ from optuna.integration.mlflow import MLflowCallback
 
 from .logger import logger
 from .utils import set_seed
-from .pipeline import load_data, PipelineSklLinRegressor
+from .pipeline import load_m5_data, PipelineNHiTS
 
 
 mlflc = MLflowCallback(
@@ -25,7 +25,7 @@ def objective(trial, data):
     seed = set_seed()
     mlflow.log_param("seed", seed)
 
-    pipe = PipelineSklLinRegressor()
+    pipe = PipelineNHiTS()
 
     logger.info("Suggest hyperparameters")
     hparams = pipe.suggest_hparams(trial)
@@ -39,7 +39,7 @@ def objective(trial, data):
     logger.info("Predict")
     metrics = pipe.test_model(data)
 
-    return metrics["rmse"]
+    return metrics["mase"]
 
 
 def get_experiment_from_name(mlflow_client, experiment_name):
@@ -54,7 +54,7 @@ def get_experiment_from_name(mlflow_client, experiment_name):
 
 def main():
     logger.info("Load dataset")
-    data = load_data()
+    data = load_m5_data()
     
     experiment_name = os.environ.get("EXPERIMENT_NAME", "default_experiment")
     
