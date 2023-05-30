@@ -25,3 +25,26 @@ Alternatively, one can load the MLFlow logs alone running the utility script:
 ```
 
 And then shutting the service down with `./mlflow_down.sh`.
+
+## Run without docker
+
+First set up a python virtual environment installing the requirements:
+
+```bash
+pip install -r requirements.txt
+```
+
+In the `src/.env` file, moidify the `mlflow` environment variables to point to
+local directories, e.g. `/path/to/folder/mlflow`.
+
+Run the pipeline with the command:
+
+```bash
+python -m src.main
+```
+
+Visualize the recorded results in the UI with:
+
+```bash
+mlflow ui --backend-store-uri /path/to/folder/mlflow
+```
