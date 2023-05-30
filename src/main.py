@@ -2,6 +2,7 @@ import logging
 import os
 
 from dotenv import load_dotenv
+
 load_dotenv("src/.env")
 
 import mlflow
@@ -14,9 +15,9 @@ from .pipeline import load_m5_data, PipelineNHiTS
 
 
 mlflc = MLflowCallback(
-        tracking_uri=os.environ.get("MLFLOW_TRACKING_URI"),
-        metric_name="study_metric",
-        create_experiment=True,
+    tracking_uri=os.environ.get("MLFLOW_TRACKING_URI"),
+    metric_name="study_metric",
+    create_experiment=True,
 )
 
 
@@ -29,7 +30,7 @@ def objective(trial, data):
 
     logger.info("Suggest hyperparameters")
     hparams = pipe.suggest_hparams(trial)
-    
+
     logger.info("Load model")
     pipe.load_model(hparams)
 
@@ -55,19 +56,19 @@ def get_experiment_from_name(mlflow_client, experiment_name):
 def main():
     logger.info("Load dataset")
     data = load_m5_data()
-    
+
     experiment_name = os.environ.get("EXPERIMENT_NAME", "default_experiment")
-    
+
     @mlflc.track_in_mlflow()
     def func(trial):
         return objective(trial, data)
 
     n_trials = 20
     logger.info("Hyperparameter search for %d trials", n_trials)
-    
+
     original_level = logger.getEffectiveLevel()
     logger.setLevel(logging.WARNING)
-    study = optuna.create_study(direction='minimize', study_name=experiment_name)
+    study = optuna.create_study(direction="minimize", study_name=experiment_name)
     study.optimize(func, n_trials=n_trials, callbacks=[mlflc])
     logger.setLevel(original_level)
 

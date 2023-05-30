@@ -13,6 +13,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 from . import metrics
 
+
 def load_data():
     db = load_diabetes()
     x_train, x_test, y_train, y_test = train_test_split(db.data, db.target)
@@ -38,22 +39,22 @@ def load_m5_data():
 class Pipeline:
     def suggest_hparams():
         """Suggest hyperparameters"""
-    
+
     def load_model():
         """Load the model"""
-        
+
     def train_model():
         """Train the model"""
-    
+
     def test_model():
         """Test the model"""
 
 
 class PipelineSklLinRegressor(Pipeline):
     def suggest_hparams(self, trial):
-        max_depth = trial.suggest_int('rf_max_depth', 2, 32, log=True)
+        max_depth = trial.suggest_int("rf_max_depth", 2, 32, log=True)
         return {"max_depth": max_depth}
-    
+
     def load_model(self, hparams: Dict[str, Any]):
         mlflow.log_param("model", "sklearn_linear_regressor")
         self.model = RandomForestRegressor(
@@ -61,16 +62,16 @@ class PipelineSklLinRegressor(Pipeline):
             max_depth=hparams["max_depth"],
             max_features=3,
         )
-    
+
     def train_model(self, data, hparams):
         model = self.model.fit(data["train"], data["train_labels"])
         with open("rf_model.pkl", "wb") as f:
             pickle.dump(model, f)
         mlflow.log_artifact("rf_model.pkl")
-    
+
     def test_model(self, data):
         y_preds = self.model.predict(data["test"])
-        
+
         # compute metrics
         mae = metrics.mae(y_preds, data["test_labels"])
         rmse = metrics.rmse(y_preds, data["test_labels"])
@@ -82,30 +83,29 @@ class PipelineSklLinRegressor(Pipeline):
 
 class PipelineNHiTS(Pipeline):
     def suggest_hparams(self, trial):
-        lr = trial.suggest_float('lr', 1e-6, 1e-2, log=True)
-        batch_size = trial.suggest_categorical('batch_size', [32,64,128,256,512])
+        lr = trial.suggest_float("lr", 1e-6, 1e-2, log=True)
+        batch_size = trial.suggest_categorical("batch_size", [32, 64, 128, 256, 512])
         return {"lr": lr, "batch_size": batch_size}
-    
+
     def load_model(self, hparams: Dict[str, Any]):
         mlflow.log_param("model", "nhits")
-        self.model : models.NHiTSModel = models.NHiTSModel(
-            input_chunk_length=28*4,
-            output_chunk_length=28,
-            n_epochs=1
+        self.model: models.NHiTSModel = models.NHiTSModel(
+            input_chunk_length=28 * 4, output_chunk_length=28, n_epochs=1
         )
-    
+
     def train_model(self, data, hparams):
         model = self.model.fit(data["train"])
         model.save("nhits_model.pkl")
         mlflow.log_artifact("nhits_model.pkl")
-    
+
     def test_model(self, data):
         y_preds = self.model.predict(28, series=data["train"])
-        
+
         # compute metrics
         mae = darts_metrics.mae(y_preds, data["test"])
         rmse = darts_metrics.rmse(y_preds, data["test"])
         mase = darts_metrics.mase(y_preds, data["test"], insample=data["train"])
+        tweedie = metrics.tweedie(y_preds, data["test"])
 
         metrics_dict = {
             "rmse": np.mean(rmse),
@@ -123,8 +123,12 @@ class PipelineNHiTS(Pipeline):
             "mase_std": np.std(mase),
             "mase_min": np.min(mase),
             "mase_max": np.max(mase),
+            "tweedie": np.mean(tweedie),
+            "tweedie_med": np.median(tweedie),
+            "tweedie_std": np.std(tweedie),
+            "tweedie_min": np.min(tweedie),
+            "tweedie_max": np.max(tweedie),
         }
 
         mlflow.log_metrics(metrics_dict)
         return metrics_dict
-
