@@ -97,6 +97,7 @@ class PipelineNHiTS(Pipeline):
         model = self.model.fit(data["train"])
         model.save("nhits_model.pkl")
         mlflow.log_artifact("nhits_model.pkl")
+        mlflow.log_artifact("nhits_model.pkl.ckpt")
 
     def test_model(self, data):
         y_preds = self.model.predict(28, series=data["train"])
