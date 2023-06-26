@@ -68,7 +68,10 @@ and can be retrieved at need:
 
 - **parameters**: usually include models hyperparameters;
 - **metrics**: scalar metrics to evaluate the model;
-- **tags**: useful to add descriptions to the run, find system tags examples [here](https://mlflow.org/docs/latest/tracking.html#system-tags);
+- **tags**: useful to add descriptions to the run.  
+Particularly useful tag are system tags (available [here](https://mlflow.org/docs/latest/tracking.html#system-tags)).
+For example, the `mlflow.note.content` accepts a string that will be rendered in
+markdown to verbosely describe the content of the current run.
 - **artifacts**: whatever file you want to upload and store in the MLFlow database.  
 It will be visible and downloadable from the UI, or it can be inspected in a
 script with the help of the [`MlflowClient`](https://mlflow.org/docs/latest/python_api/mlflow.client.html) class.
